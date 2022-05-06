@@ -1,9 +1,11 @@
 package assign3
 
+import parabond.cluster.BasicNode.LOG
 import parabond.cluster.{Node, Partition}
 import parabond.util.{JavaMongoHelper, Result}
 import parascale.actor.last.{Task, Worker}
 import parascale.util.getPropertyOrElse
+
 
 object ParaWorker extends App {
   //hushing mongoDB
@@ -44,18 +46,21 @@ class ParaWorker(port: Int) extends Worker(port) {
 
 
         case task: Task =>
-          // LOG.info("got task = " + task + " sending reply")
+          println("got task = " + task + " sending reply")
           task.payload match {
             case partition: Partition => {
+              //passing the partition to the node and ensuring that it constructs correctly
               val node = Node.getInstance(partition)
               assert(node != null, "failed to construct node")
               val analysis = node.analyze()
+              //adding up all of the t1 values
               val sumT1 = analysis.results.foldLeft(0L) { (sum, next) => {
                 val currentResult = next.result
                 sum + (currentResult.t1 - currentResult.t0)
               }
 
               }
+
               sender ! Result(sumT1)
             }
 
